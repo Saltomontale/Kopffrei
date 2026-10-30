@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Gedanken-Cockpit</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    background-color: #000000;
+    color: #ffffff;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    padding: 16px;
+    padding-bottom: 50px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  .header {
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid #2c2c2e;
+  }
+  .title { font-size: 20px; font-weight: 700; }
+  .subtitle { font-size: 12px; color: #8e8e93; margin-top: 2px; }
+  
+  .card {
+    background-color: #1c1c1e;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 20px;
+    border: 1px solid #2c2c2e;
+  }
+  
+  /* Top Eingabe Layout */
+  .mic-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 14px;
+  }
+  .mic-btn {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background-color: #0a84ff;
+    border: none;
+    font-size: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.1s, background-color 0.2s;
+    box-shadow: 0 4px 12px rgba(10, 132, 255, 0.3);
+  }
+  .mic-btn.recording {
+    background-color: #ff3b30;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7); }
+    70% { box-shadow: 0 0 0 14px rgba(255, 59, 48, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); }
+  }
+
+  textarea {
+    width: 100%;
+    background-color: #2c2c2e;
+    color: #ffffff;
+    border: 1px solid #3a3a3c;
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 15px;
+    font-family: inherit;
+    resize: none;
+    outline: none;
+    margin-bottom: 12px;
+  }
+  textarea:focus { border-color: #0a84ff; }
+
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .chip {
+    background-color: #2c2c2e;
+    color: #d1d1d6;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    cursor: pointer;
+  }
+
+  .btn-primary {
+    width: 100%;
+    background-color: #0a84ff;
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-primary:active { opacity: 0.8; }
+
+  /* Sektionen */
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    margin-top: 20px;
+    padding: 0 4px;
+  }
+  .section-title { font-size: 13px; font-weight: 600; color: #8e8e93; text-transform: uppercase; letter-spacing: 0.5px; }
+  .badge {
+    background: rgba(10, 132, 255, 0.2);
+    color: #0a84ff;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-weight: 600;
+  }
+
+  .item-card {
+    background-color: #1c1c1e;
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 10px;
+    border: 1px solid #2c2c2e;
+  }
+
+  .event-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .event-title { font-size: 15px; font-weight: 600; }
+  .event-time { font-size: 13px; color: #0a84ff; margin-top: 4px; }
+  .btn-cal {
+    width: 100%;
+    background-color: #2c2c2e;
+    color: #0a84ff;
+    border: 1px solid rgba(10, 132, 255, 0.35);
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* To-Do Styling mit Blur & Erledigt-Effekt */
+  .todo-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .todo-row.done {
+    opacity: 0.45;
+    filter: blur(0.3px);
+  }
+  .checkbox {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid #636366;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    color: #000;
+    flex-shrink: 0;
+  }
+  .checkbox.done { background-color: #30d158; border-color: #30d158; color: #fff; }
+  .todo-text { font-size: 15px; flex: 1; }
+  .todo-text.done { text-decoration: line-through; color: #8e8e93; }
+
+  .empty { text-align: center; color: #636366; font-size: 13px; padding: 14px; }
+  .del-btn { background: none; border: none; color: #636366; font-size: 16px; padding: 0 4px; cursor: pointer; }
+  .clear-btn { background: none; border: none; color: #8e8e93; font-size: 11px; cursor: pointer; }
+</style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="title">🧠 Gedanken-Cockpit</div>
+    <div class="subtitle" id="dateDisplay"></div>
+  </div>
+
+  <!-- Oberster Bereich: Mikrofon, Textbox, Button -->
+  <div class="card">
+    <div class="mic-container">
+      <button id="micBtn" class="mic-btn" onclick="toggleSpeech()" title="Spracheingabe">🎙️</button>
+    </div>
+
+    <textarea id="thoughtInput" rows="3" placeholder="Tippe hier oder nutze das Mikrofon (z.B. 'Meeting morgen um 10 Uhr und privat Milch kaufen')..."></textarea>
+
+    <div class="chips">
+      <button class="chip" onclick="fillExample('Meeting mit Chef morgen um 10 Uhr und privat noch Milch einkaufen')">💡 Beispiel</button>
+      <button class="chip" onclick="document.getElementById('thoughtInput').value=''">🧹 Text leeren</button>
+    </div>
+
+    <button class="btn-primary" onclick="processThoughts()">✨ Gedanken sortieren</button>
+  </div>
+
+  <!-- Kategorie 1: Kalender-Termine -->
+  <div class="section-header">
+    <span class="section-title">📅 Kalender-Termine</span>
+    <span class="badge" id="eventCount">0</span>
+  </div>
+  <div id="eventsList"></div>
+
+  <!-- Kategorie 2: To-Dos Arbeit -->
+  <div class="section-header">
+    <span class="section-title">💼 To-Dos Arbeit</span>
+    <button class="clear-btn" onclick="clearDone('work')">Erledigte löschen</button>
+  </div>
+  <div id="workTodosList"></div>
+
+  <!-- Kategorie 3: To-Dos Privat -->
+  <div class="section-header">
+    <span class="section-title">🏠 To-Dos Privat</span>
+    <button class="clear-btn" onclick="clearDone('private')">Erledigte löschen</button>
+  </div>
+  <div id="privateTodosList"></div>
+
+<script>
+  let state = { events: [], todos: [] };
+  try {
+    const saved = localStorage.getItem('cockpit_state_v3');
+    if (saved) state = JSON.parse(saved);
+  } catch (e) {}
+
+  function saveState() {
+    try { localStorage.setItem('cockpit_state_v3', JSON.stringify(state)); } catch (e) {}
+    render();
+  }
+
+  document.getElementById('dateDisplay').innerText = new Date().toLocaleDateString('de-DE', {
+    weekday: 'long', day: 'numeric', month: 'long'
+  });
+
+  function fillExample(txt) {
+    document.getElementById('thoughtInput').value = txt;
+  }
+
+  // Live Spracherkennung für Safari / iPhone
+  let recognition = null;
+  function toggleSpeech() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Nutze für die Spracheingabe am besten das kleine Mikrofon-Symbol unten rechts auf deiner iPhone-Tastatur!");
+      document.getElementById('thoughtInput').focus();
+      return;
+    }
+    const btn = document.getElementById('micBtn');
+    if (recognition) {
+      recognition.stop();
+      return;
+    }
+    recognition = new SpeechRecognition();
+    recognition.lang = 'de-DE';
+    recognition.onstart = () => btn.classList.add('recording');
+    recognition.onresult = (e) => {
+      const text = e.results[0][0].transcript;
+      const input = document.getElementById('thoughtInput');
+      input.value = input.value ? input.value + " " + text : text;
+    };
+    recognition.onend = () => {
+      btn.classList.remove('recording');
+      recognition = null;
+    };
+    recognition.start();
+  }
+
+  function processThoughts() {
+    const input = document.getElementById('thoughtInput');
+    const text = input.value.trim();
+    if (!text) return;
+
+    const parts = text.split(/\s+(?:und\s+danach|und\s+vorher|außerdem|sowie|und\s+noch|und)\s+|,\s*/i);
+
+    parts.forEach(part => {
+      let clean = part.trim();
+      if (!clean) return;
+
+      const timeMatch = clean.match(/(\d{1,2})(?:[:.](\d{2}))?\s*Uhr/i);
+      const isTomorrow = /morgen/i.test(clean);
+      const isDayAfter = /übermorgen/i.test(clean);
+      const weekdayMatch = clean.match(/am\s+(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag)/i);
+
+      if (timeMatch || isTomorrow || isDayAfter || weekdayMatch) {
+        let d = new Date();
+        if (isTomorrow) d.setDate(d.getDate() + 1);
+        else if (isDayAfter) d.setDate(d.getDate() + 2);
+        else if (weekdayMatch) {
+          const days = ['sonntag','montag','dienstag','mittwoch','donnerstag','freitag','samstag'];
+          const target = days.indexOf(weekdayMatch[1].toLowerCase());
+          let diff = (target - d.getDay() + 7) % 7;
+          if (diff === 0) diff = 7;
+          d.setDate(d.getDate() + diff);
+        }
+
+        let hours = timeMatch ? parseInt(timeMatch[1], 10) : 9;
+        let mins = (timeMatch && timeMatch[2]) ? parseInt(timeMatch[2], 10) : 0;
+
+        const dateStr = d.toISOString().split('T')[0];
+        const timeStr = String(hours).padStart(2, '0') + ':' + String(mins).padStart(2, '0');
+
+        let title = clean
+          .replace(/morgen|übermorgen/gi, '')
+          .replace(/am\s+(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag)/gi, '')
+          .replace(/um\s+\d{1,2}(?:[:.]\d{2})?\s*Uhr/gi, '')
+          .replace(/\d{1,2}(?:[:.]\d{2})?\s*Uhr/gi, '')
+          .replace(/ich\s+muss\s+(noch)?/gi, '')
+          .trim();
+
+        if (!title) title = clean;
+        title = title.charAt(0).toUpperCase() + title.slice(1);
+
+        state.events.unshift({ id: Date.now() + Math.random(), title, date: dateStr, time: timeStr });
+      } else {
+        // Unterscheidung Arbeit vs Privat anhand von Keywords
+        let category = 'private';
+        const workKeywords = ['arbeit', 'chef', 'meeting', 'kunde', 'projekt', 'büro', 'kollege', 'rechnung', 'steuer', 'termin'];
+        if (workKeywords.some(keyword => clean.toLowerCase().includes(keyword))) {
+          category = 'work';
+        }
+
+        let todoTitle = clean.replace(/^(ich\s+muss\s+noch|ich\s+muss|vergiss\s+nicht|noch)\s+/i, '').trim();
+        todoTitle = todoTitle.charAt(0).toUpperCase() + todoTitle.slice(1);
+        
+        state.todos.unshift({ id: Date.now() + Math.random(), title: todoTitle, done: false, category });
+      }
+    });
+
+    input.value = '';
+    saveState();
+  }
+
+  function exportICS(id) {
+    const ev = state.events.find(e => e.id === id);
+    if (!ev) return;
+    const [y, m, d] = ev.date.split('-').map(Number);
+    const [hr, min] = ev.time.split(':').map(Number);
+    const start = new Date(y, m - 1, d, hr, min);
+    const end = new Date(start.getTime() + 3600000);
+
+    const fmt = (dt) => dt.getFullYear() +
+      String(dt.getMonth() + 1).padStart(2, '0') +
+      String(dt.getDate()).padStart(2, '0') + 'T' +
+      String(dt.getHours()).padStart(2, '0') +
+      String(dt.getMinutes()).padStart(2, '0') + '00';
+
+    const ics = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'BEGIN:VEVENT',
+      'DTSTART:' + fmt(start),
+      'DTEND:' + fmt(end),
+      'SUMMARY:' + ev.title,
+      'END:VEVENT',
+      'END:VCALENDAR'
+    ].join('\r\n');
+
+    window.location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics);
+  }
+
+  function toggleTodo(id) {
+    const t = state.todos.find(x => x.id === id);
+    if (t) t.done = !t.done;
+    saveState();
+  }
+
+  function deleteEvent(id) {
+    state.events = state.events.filter(e => e.id !== id);
+    saveState();
+  }
+
+  function clearDone(category) {
+    state.todos = state.todos.filter(t => !(t.category === category && t.done));
+    saveState();
+  }
+
+  function render() {
+    document.getElementById('eventCount').innerText = state.events.length;
+    
+    // Kalender rendern
+    const evEl = document.getElementById('eventsList');
+    if (state.events.length === 0) {
+      evEl.innerHTML = '<div class="item-card empty">Keine Termine vorhanden.</div>';
+    } else {
+      evEl.innerHTML = state.events.map(ev => `
+        <div class="item-card">
+          <div class="event-top">
+            <div>
+              <div class="event-title">${ev.title}</div>
+              <div class="event-time">🗓️ ${ev.date} &bull; ⏰ ${ev.time} Uhr</div>
+            </div>
+            <button class="del-btn" onclick="deleteEvent(${ev.id})">✕</button>
+          </div>
+          <button class="btn-cal" onclick="exportICS(${ev.id})">📅 In Apple Kalender eintragen</button>
+        </div>
+      `).join('');
+    }
+
+    // To-Dos sortieren: Unvollständige (done: false) zuerst, erledigte (done: true) weiter unten
+    const sortedTodos = [...state.todos].sort((a, b) => (a.done === b.done) ? 0 : a.done ? 1 : -1);
+
+    // Arbeit To-Dos rendern
+    const workTodos = sortedTodos.filter(t => t.category === 'work');
+    const workEl = document.getElementById('workTodosList');
+    if (workTodos.length === 0) {
+      workEl.innerHTML = '<div class="item-card empty">Keine Aufgaben im Bereich Arbeit.</div>';
+    } else {
+      workEl.innerHTML = workTodos.map(t => `
+        <div class="item-card todo-row ${t.done ? 'done' : ''}" onclick="toggleTodo(${t.id})">
+          <div class="checkbox ${t.done ? 'done' : ''}">${t.done ? '✓' : ''}</div>
+          <div class="todo-text ${t.done ? 'done' : ''}">${t.title}</div>
+        </div>
+      `).join('');
+    }
+
+    // Privat To-Dos rendern
+    const privateTodos = sortedTodos.filter(t => t.category === 'private');
+    const privEl = document.getElementById('privateTodosList');
+    if (privateTodos.length === 0) {
+      privEl.innerHTML = '<div class="item-card empty">Keine Aufgaben im Bereich Privat.</div>';
+    } else {
+      privEl.innerHTML = privateTodos.map(t => `
+        <div class="item-card todo-row ${t.done ? 'done' : ''}" onclick="toggleTodo(${t.id})">
+          <div class="checkbox ${t.done ? 'done' : ''}">${t.done ? '✓' : ''}</div>
+          <div class="todo-text ${t.done ? 'done' : ''}">${t.title}</div>
+        </div>
+      `).join('');
+    }
+  }
+
+  render();
+</script>
+</body>
+</html>
